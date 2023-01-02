@@ -5,11 +5,11 @@ using NGNet;
 using System;
 using NaughtyAttributes;
 
-namespace AIGears.Server
+namespace Jamong.Server
 {
-    public class AIG_GameServer : Singleton2<AIG_GameServer>
+    public class GameServer : Singleton2<GameServer>
     {
-        public AIG_Client Client { get; private set; }
+        public Client Client { get; private set; }
 
         public GameServer_proxy proxy = new GameServer_proxy();
         private GameServer_stub stub = new GameServer_stub();
@@ -18,7 +18,7 @@ namespace AIGears.Server
 
         public bool IsConnectServer { get => Client != null && Client.IsConnected; }
 
-        public Action<AIG_Client> ActionOnConnected;
+        public Action<Client> ActionOnConnected;
 
         public DateTime checkServerInfoTime;
         public DateTime checkReconnectionServerTime;
@@ -46,13 +46,13 @@ namespace AIGears.Server
 
         private void Update()
         {
-            if(Client != null)
+            if (Client != null)
             {
                 try
                 {
                     Client.FrameMove();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Debug.LogError("GameServer: " + e.Message);
                 }
@@ -67,10 +67,10 @@ namespace AIGears.Server
 
         // 원본에서는 유저가 서버와 연결돼있는지 확인함 
         public void Connect()
-        {            
+        {
             if (Client == null)
             {
-                Client = new AIG_Client();
+                Client = new Client();
             }
 
             if (!Client.IsConnected)
@@ -84,8 +84,6 @@ namespace AIGears.Server
                 stub.TestAck = TestAck;
                 stub.Test2Ack = Test2Ack;
                 stub.TransformSyncAck = TransformSyncAck;
-                stub.PlayerJoinSyncAck = PlayerJoinAck;
-                stub.PlayerQuitSyncAck = PlayerQuitAck;
 
                 stub.StartMatchingAck = StartMatchingAck;
                 stub.OnFindMatchAck = FindMatchAck;
@@ -108,7 +106,7 @@ namespace AIGears.Server
         public Action<int> onTestAck;
         private bool TestAck(int Error)
         {
-            if(Error < 0)
+            if (Error < 0)
             {
                 Debug.LogError("TestAck: " + Error);
                 // 에러가 난다해도 이 함수안에 들어왔으면 이 함수가 Stub에 연결됐다는 것이기때문에
@@ -123,7 +121,7 @@ namespace AIGears.Server
         public Action<int, int, string> onTest2Ack;
         private bool Test2Ack(int error, int testInt, string testString)
         {
-            if(error < 0)
+            if (error < 0)
             {
                 Debug.LogError("Test2Ack: " + error);
                 return true;
@@ -132,35 +130,6 @@ namespace AIGears.Server
             onTest2Ack?.Invoke(error, testInt, testString);
             return true;
         }
-
-        #region 트랜스폼 싱크 테스트
-
-        public Action<string, Vector3, Quaternion> onPlayerJoinAck;
-        private bool PlayerJoinAck(int error, string userID, Vector3 pos, Quaternion rot)
-        {
-            if (error < 0)
-            {
-                Debug.LogError("PlayerJoinAck: " + error);
-                return true;
-            }
-
-            onPlayerJoinAck?.Invoke(userID, pos, rot);
-            return true;
-        }
-
-        public Action<string> onPlayerQuitAck;
-        private bool PlayerQuitAck(int error, string userID)
-        {
-            if (error < 0)
-            {
-                Debug.LogError("PlayerQuitAck: " + error);
-                return true;
-            }
-
-            onPlayerQuitAck?.Invoke(userID);
-            return true;
-        }
-        #endregion
 
         #region 매칭
         public Action onStartMatchingAck;
@@ -240,16 +209,15 @@ namespace AIGears.Server
                 return true;
             }
 
-            var trSync = PoolManager.instance.Pop(poolID).GetComponent<TransformSync>();
-            trSync.id = syncID;
-            trSync.isAvatar = true;
+            var jv = PoolManager.instance.Pop(poolID).GetComponent<JamongView>();
+            jv.Init(syncID, false);
             //SyncObjectContainer.instance.allTransformSyncsList.Add(trSync);
 
-            ParticleSystem particle = trSync.GetComponent<ParticleSystem>();
+            ParticleSystem particle = jv.GetComponent<ParticleSystem>();
             if (particle != null)
                 particle.Play();
 
-            trSync.gameObject.SetActive(true);
+            jv.gameObject.SetActive(true);
 
             onPoolableSpawnAck?.Invoke(syncID, poolID);
             return true;
@@ -264,8 +232,8 @@ namespace AIGears.Server
                 return true;
             }
 
-            var trSync = SyncObjectContainer.instance.allTransformSyncsList.Find(t => t.id == syncID);
-            if(trSync != null)
+            var trSync = SyncObjectContainer.instance.allTransformSyncsList.Find(t => t.MyJamongView.ViewID == syncID);
+            if (trSync != null)
             {
                 trSync.gameObject.SetActive(false);
                 PoolManager.instance.Push(trSync.GetComponent<Poolable>());
@@ -279,13 +247,28 @@ namespace AIGears.Server
         public Action<List<TransformSyncReceived>> onMultipleTransformReceiveAck;
         private bool MutipleTransformSyncAck(int error, List<TransformSyncReceived> syncList)
         {
-            if(error < 0)
+            if (error < 0)
             {
                 Debug.LogError("MutipleTransformSyncAck: " + error);
                 return true;
             }
 
             onMultipleTransformReceiveAck?.Invoke(syncList);
+            return true;
+        }
+        #endregion
+
+        #region 기타S2C
+        public Action<int> onSyncIdReceiveAck;
+        private bool SyncidReceiveAck(int error, int syncId)
+        {
+            if (error < 0)
+            {
+                Debug.LogError("SyncidReceiveAck: " + error);
+                return true;
+            }
+
+            onSyncIdReceiveAck?.Invoke(syncId);
             return true;
         }
         #endregion

@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using AIGears.Server;
+using Jamong.Server;
+using System;
 
 public class SyncObjectContainer : MonoBehaviour
 {
@@ -18,12 +19,23 @@ public class SyncObjectContainer : MonoBehaviour
 
     private Coroutine runningSyncCor;
 
+    private Queue<Action<int>> syncIdReceiveActionQueue;
+
     private void Awake()
     {
-        if(instance == null)
+        if (instance == null)
             instance = this;
 
-        AIG_GameServer.Instance.onMultipleTransformReceiveAck += OnTransformSyncReceive;
+        GameServer.Instance.onMultipleTransformReceiveAck += OnTransformSyncReceive;
+        GameServer.Instance.onSyncIdReceiveAck += OnNewSyncIdReceive;
+
+        syncIdReceiveActionQueue = new Queue<Action<int>>();
+    }
+
+    private void OnDestroy()
+    {
+        GameServer.Instance.onMultipleTransformReceiveAck -= OnTransformSyncReceive;
+        GameServer.Instance.onSyncIdReceiveAck -= OnNewSyncIdReceive;
     }
 
     private void Start()
@@ -34,13 +46,30 @@ public class SyncObjectContainer : MonoBehaviour
 
     public TransformSync FindTransformSync(int id, bool isMine)
     {
-        return allTransformSyncsList.Find(t => t.id == id && t.IsMine == isMine);
+        return allTransformSyncsList.Find(t => t.MyJamongView.ViewID == id && t.MyJamongView.IsMine == isMine);
     }
 
-    public int GetNewSyncID()
+    public void GetNewSyncID(Action<int> onReceived)
     {
-        allTransformSyncsList.Sort((TransformSync a, TransformSync b) => a.id.CompareTo(b.id));
-        return allTransformSyncsList[allTransformSyncsList.Count - 1].id + 1;
+        //allTransformSyncsList.Sort((TransformSync a, TransformSync b) => a.id.CompareTo(b.id));
+        //return allTransformSyncsList[allTransformSyncsList.Count - 1].id + 1;
+
+        // 새 싱크ID 요청
+        GameServer.Instance.proxy.NewSyncIdReq(0);
+        // 서버에게 새ID 받았을때 실행할 액션을 큐에 넣어둠
+        syncIdReceiveActionQueue.Enqueue(onReceived);
+    }
+
+    /// <summary>
+    /// 서버에서 새 싱크ID를 받음
+    /// </summary>
+    /// <param name="newId"></param>
+    private void OnNewSyncIdReceive(int newId)
+    {
+        if (syncIdReceiveActionQueue.Count <= 0)
+            return;
+        // 큐에서 액션을 하나 꺼내서 실행
+        syncIdReceiveActionQueue.Dequeue()?.Invoke(newId);
     }
 
     public void SetSyncInterval(float value)
@@ -50,11 +79,11 @@ public class SyncObjectContainer : MonoBehaviour
 
     IEnumerator TransformSyncCor()
     {
-        while(true)
+        while (true)
         {
             //AIG_GameServer.Instance.proxy.MultipleTransformSyncReq(0, allMineTransformSyncList);
-            if(allMineTransformSyncList.Count > 0)
-                AIG_GameServer.Instance.proxy.MultipleTransformSyncReq(0, allMineTransformSyncList, JsonMessage.TargetEnum.OtherPlayers);
+            if (allMineTransformSyncList.Count > 0)
+                GameServer.Instance.proxy.MultipleTransformSyncReq(0, allMineTransformSyncList, JsonMessage.TargetEnum.OtherPlayers);
 
             yield return new WaitForSeconds(syncInterval);
         }
@@ -71,7 +100,21 @@ public class SyncObjectContainer : MonoBehaviour
 
                 tr.OnTransformSyncReceive(receivedTR.objectID, receivedTR.position, receivedTR.syncVelocity ? receivedTR.velocity : Vector3.zero, receivedTR.rotation);
             }
-        }        
+        }
+    }
+
+    public void RemoveTransformSync(TransformSync trSync)
+    {
+        if (allTransformSyncsList.Contains(trSync))
+            allTransformSyncsList.Remove(trSync);
+
+        if (allMineTransformSyncList.Contains(trSync))
+            allMineTransformSyncList.Remove(trSync);
+
+        if (allOtherTransformSyncDict.ContainsKey(trSync.id) && allOtherTransformSyncDict[trSync.id] == trSync)
+        {
+            allOtherTransformSyncDict.Remove(trSync.id);
+        }
     }
 }
 

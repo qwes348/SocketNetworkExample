@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AIGears.Server
+namespace Jamong.Server
 {
     /*
      * 서버에 보낼 리퀘스트의 종류를 구분할 ID를 보관하는 클래스
@@ -14,11 +14,6 @@ namespace AIGears.Server
     {
         public const int Rmi_TestAck = 1;
         public const int Rmi_Test2Ack = 2;
-
-        #region 트랜스폼 동기화 테스트용        
-        public const int Rmi_OnPlayerJoin = 4;
-        public const int Rmi_OnPlayerQuit = 5;
-        #endregion
 
         public const int Rmi_PvpPlayerInfoSync = 6;
         public const int Rmi_PvpLoadSceneComplete = 7;
@@ -43,7 +38,9 @@ namespace AIGears.Server
         #region 매칭 C2S
         public const int C2S_StartMatchingReq = 10040;
         public const int C2S_StopMatchingReq = 10041;
+        public const int C2S_LeaveMatchReq = 10050;
         #endregion
+        public const int C2S_SyncIdReq = 19998;
 
 
         /*
@@ -53,8 +50,12 @@ namespace AIGears.Server
         public const int S2C_MatchingStart = 20040;
         public const int S2C_OnFindMatch = 20041;
         public const int S2C_SuccessStopMatch = 20042;
+
+        public const int S2C_LeaveMatchNotice = 20051;
+        public const int S2C_LeaveMatchOtherNotice = 20052;
         // 20052
         #endregion
+        public const int S2C_SyncIdReceive = 29998;
     }
 }
 

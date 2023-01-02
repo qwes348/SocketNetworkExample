@@ -11,10 +11,10 @@ using System.Text;
 using NGNet;
 using Newtonsoft.Json.Linq;
 
-namespace AIGears.Server
+namespace Jamong.Server
 {
     [Serializable]
-    public class AIG_Client
+    public class Client
     {
         public string ClientID { get => _clientID; set => _clientID = value; }
         private string _clientID;
@@ -59,7 +59,7 @@ namespace AIGears.Server
         private Int32 SequenceNumRecv = 0;
         private Int32 SequenceNumFailCount = 0;
 
-        public AIG_Client()
+        public Client()
         {
             bufferRecv = new byte[BasicType.MAX_PACKET_SIZE];
             csSend = new object();

@@ -12,7 +12,7 @@ using System.Text;
  * Json데이터를 보내기 위한 데이터 버퍼
  */
 
-namespace AIGears.Server
+namespace Jamong.Server
 {
     public class JsonMessage
     {

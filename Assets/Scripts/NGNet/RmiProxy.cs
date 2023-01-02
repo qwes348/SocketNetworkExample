@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine.SceneManagement;
-using AIGears.Server;
+using Jamong.Server;
 
 namespace NGNet
 {
     public abstract class RmiProxy
     {
-        public AIG_Client m_core = null;
+        public Client m_core = null;
 
         public RmiProxy()
         {

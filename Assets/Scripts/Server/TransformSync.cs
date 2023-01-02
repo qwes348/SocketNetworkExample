@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using AIGears.Server;
+using Jamong.Server;
 
+[RequireComponent(typeof(JamongView))]
 public class TransformSync : MonoBehaviour
 {
     public int id;
@@ -18,11 +19,42 @@ public class TransformSync : MonoBehaviour
     private Vector3 receiveVelocity;
 
     private Coroutine runningSyncCor;
+    private JamongView jv;
+    private Vector3 lastSyncPos;
+    private float moveDistanceFromLastSyncPos = 100f;
 
-    public bool IsMine { get => !isAvatar; }
+    #region 프로퍼티
+    public JamongView MyJamongView
+    {
+        get
+        {
+            if (jv == null)
+                jv = GetComponent<JamongView>();
+            return jv;
+        }
+    }
+    public Vector3 LastSyncPos => lastSyncPos;
+    public float MoveDistance => moveDistanceFromLastSyncPos;
+    #endregion
+
+    public bool IsMine
+    {
+        get
+        {
+            if (jv == null)
+                jv = GetComponent<JamongView>();
+            if (!jv.IsInitComplete)
+                return false;
+
+            return jv.IsMine;
+        }
+    }
 
     private void Awake()
     {
+        if (jv == null)
+            jv = GetComponent<JamongView>();
+
         if (rb == null && syncVelocity)
             rb = GetComponent<Rigidbody>();
         if (rb == null && syncVelocity)
@@ -43,7 +75,7 @@ public class TransformSync : MonoBehaviour
             // 모든 싱크 오브젝트
             SyncObjectContainer.instance.allTransformSyncsList.Add(this);
 
-            if(IsMine)
+            if (IsMine)
             {
                 // 내 싱크 오브젝트
                 SyncObjectContainer.instance.allMineTransformSyncList.Add(this);
@@ -51,8 +83,8 @@ public class TransformSync : MonoBehaviour
             else
             {
                 // 타 플레이어의 싱크 오브젝트
-                SyncObjectContainer.instance.allOtherTransformSyncDict.Add(id, this);
-            }    
+                SyncObjectContainer.instance.allOtherTransformSyncDict.Add(MyJamongView.ViewID, this);
+            }
         }
     }
 
@@ -93,15 +125,24 @@ public class TransformSync : MonoBehaviour
 
     public void OnTransformSyncReceive(int objectID, Vector3 pos, Vector3 velocity, Quaternion rot)
     {
-        if (id != objectID)
+        if (MyJamongView.ViewID != objectID)
             return;
         if (!gameObject.activeSelf)
             return;
 
         receivePos = pos;
-        receiveRot = rot;        
+        receiveRot = rot;
 
-        if(rb != null && syncVelocity)
+        if (rb != null && syncVelocity)
+        {
             rb.velocity = velocity;
+            receiveVelocity = velocity;
+        }
+    }
+
+    public void SetLastSyncPos(Vector3 pos)
+    {
+        lastSyncPos = pos;
+        moveDistanceFromLastSyncPos = 0f;
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using AIGears.Server;
+using Jamong.Server;
 
 public class TestBallSpawner : MonoBehaviour
 {
@@ -29,7 +29,7 @@ public class TestBallSpawner : MonoBehaviour
         {
             var trSync = Instantiate(prefab, transform).GetComponent<TransformSync>();
             trSync.id = id;
-            AIG_GameServer.Instance.proxy.PoolableSpawnSyncReq(0, id, prefab.GetComponent<Poolable>().id, JsonMessage.TargetEnum.OtherPlayers);
+            GameServer.Instance.proxy.PoolableSpawnSyncReq(0, id, prefab.GetComponent<Poolable>().id, JsonMessage.TargetEnum.OtherPlayers);
             id++;
         }
     }

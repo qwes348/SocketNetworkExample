@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NGNet;
 
-namespace AIGears.Server
+namespace Jamong.Server
 {
     // 리퀘스트를 보내는곳
     public class GameServer_proxy : RmiProxy
@@ -29,28 +29,6 @@ namespace AIGears.Server
             RmiSend(GameServer_RMI.Rmi_Test2Ack, msg, JsonMessage.TargetEnum.AllPlayers);
         }
         #endregion
-
-        #region 트랜스폼 싱크 테스트
-
-        public void PlayerJoinReq(int error, string userID, Vector3 pos, Quaternion rot, JsonMessage.TargetEnum target = JsonMessage.TargetEnum.AllPlayersInTheRoom)
-        {
-            JsonMessage msg = new JsonMessage();
-            msg.Write("error", error);
-            msg.Write("userID", userID);
-            msg.Write("pos", pos);
-            msg.Write("rot", rot);
-            RmiSend(GameServer_RMI.Rmi_OnPlayerJoin, msg, target);
-        }
-
-        public void PlayerQuitReq(int error, string userID, JsonMessage.TargetEnum target = JsonMessage.TargetEnum.AllPlayersInTheRoom)
-        {
-            JsonMessage msg = new JsonMessage();
-            msg.Write("error", error);
-            msg.Write("userID", userID);
-            RmiSend(GameServer_RMI.Rmi_OnPlayerQuit, msg, target);
-        }
-        #endregion
-
 
         #region 매칭
         public void StartMatchingReq(int error, string nick, string iconID)
@@ -144,6 +122,15 @@ namespace AIGears.Server
             msg.Write("syncID", syncID);
             msg.Write("poolID", poolID);
             RmiSend(GameServer_RMI.Rmi_PoolablePushSync, msg, JsonMessage.TargetEnum.OtherPlayersInTheRoom);
+        }
+        #endregion
+
+        #region 기타 서버에 요청
+        public void NewSyncIdReq(int error)
+        {
+            JsonMessage msg = new JsonMessage();
+            msg.Write("error", error);
+            RmiSend(GameServer_RMI.C2S_SyncIdReq, msg, JsonMessage.TargetEnum.None);
         }
         #endregion
     }
