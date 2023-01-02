@@ -95,6 +95,8 @@ namespace Jamong.Server
                 stub.PoolableSpawnSyncAck = PoolableSpawnSyncAck;
                 stub.PoolablePushSyncAck = PoolablePushSyncAck;
                 stub.MultipleTransformSyncAck = MutipleTransformSyncAck;
+
+                stub.OnSyncIdReceiveAck = SyncidReceiveAck;
             }
         }
 
