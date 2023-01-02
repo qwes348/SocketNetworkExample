@@ -83,11 +83,13 @@ namespace Jamong.Server
                 // Stub에서 메세지를 받았을때 ID에따라 호출될 함수들을 액션에 연결
                 stub.TestAck = TestAck;
                 stub.Test2Ack = Test2Ack;
-                stub.TransformSyncAck = TransformSyncAck;
 
                 stub.StartMatchingAck = StartMatchingAck;
                 stub.OnFindMatchAck = FindMatchAck;
                 stub.OnStopMatchingAck = StopMatchAck;
+                stub.PvpLoadSceneCompleteAck = PvpLoadSceneCompleteAck;
+                stub.OnLeaveMatchAck = LeaveMatchAck;
+                stub.OnLeaveMatchOtherAck = LeaveMatchOtherAck;
 
                 stub.GameReadySyncAck = GameReadySyncAck;
                 stub.PoolableSpawnSyncAck = PoolableSpawnSyncAck;
@@ -168,6 +170,45 @@ namespace Jamong.Server
             }
 
             onStopMatchAck?.Invoke();
+            return true;
+        }
+
+        public Action onOtherPlayerLoadSceneCompleteAck;
+        private bool PvpLoadSceneCompleteAck(int error)
+        {
+            if (error < 0)
+            {
+                Debug.LogError("PvpLoadSceneCompleteAck: " + error);
+                return true;
+            }
+
+            onOtherPlayerLoadSceneCompleteAck?.Invoke();
+            return true;
+        }
+
+        public Action onLeaveMatchAck;
+        private bool LeaveMatchAck(int error)
+        {
+            if (error < 0)
+            {
+                Debug.LogError("LeaveMatchAck: " + error);
+                return true;
+            }
+
+            onLeaveMatchAck?.Invoke();
+            return true;
+        }
+
+        public Action onLeaveMatchOtherAck;
+        private bool LeaveMatchOtherAck(int error)
+        {
+            if (error < 0)
+            {
+                Debug.LogError("LeaveMatchOtherAck: " + error);
+                return true;
+            }
+
+            onLeaveMatchOtherAck?.Invoke();
             return true;
         }
         #endregion
