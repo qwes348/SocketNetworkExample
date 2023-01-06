@@ -347,7 +347,7 @@ namespace Jamong.Server
                             Buffer.BlockCopy(bufferRecv, 0, msgRecv.buffer, 0, packetLength);
 
                             buffRecvSize -= packetLength;
-                            if(buffRecvSize >= sizeof(int))
+                            if(buffRecvSize >= 1)
                             {
                                 Buffer.BlockCopy(bufferRecv, packetLength, bufferRecv, 0, buffRecvSize);
                             }
